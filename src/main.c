@@ -22,6 +22,24 @@ typedef ssize_t  isize;
 #define X_RES 256
 #define Y_RES 144
 
+typedef struct vec2f_s {f32 x,y;} vec2f;
+typedef struct vec2i_s {i32 x,y;} vec2i;
+
+#define dot(v0, v1)                  \
+    ({ const vec2f _v0 = (v0), _v1 = (v1); (_v0.x * _v1.x) + (_v0.y * _v1.y); })
+#define length(v) ({ const v2 _v = (v); sqrtf(dot(_v, _v)); })
+#define normalize(u) ({              \
+        const vec2f _u = (u);           \
+        const f32 l = length(_u);    \
+        (vec2f) { _u.x / l, _u.y / l }; \
+    })
+#define min(a, b) ({ __typeof__(a) _a = (a), _b = (b); _a < _b ? _a : _b; })
+#define max(a, b) ({ __typeof__(a) _a = (a), _b = (b); _a > _b ? _a : _b; })
+#define sign(a) ({                                       \
+        __typeof__(a) _a = (a);                          \
+        (__typeof__(a))(_a < 0 ? -1 : (_a > 0 ? 1 : 0)); \
+    })
+
 static struct {
 	SDL_Window* window;
 	SDL_Renderer* renderer;
@@ -29,9 +47,31 @@ static struct {
 	u32 pixels[X_RES*Y_RES];
 	bool quit;
 
-
+	
+	vec2f pos;
+	vec2f dir;
+	vec2f plane;
 } state;	
 
+#define MAP_SIZE 8
+
+static u8 MAP[MAP_SIZE^2] {
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,1,0,1,0,1,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+}
+
+
+static void renderer() {
+	for (int x = 0; x < Y_RES; x++) {
+			
+	}
+}
 
 
 int main(int argc, char *argv[]) {
@@ -65,6 +105,10 @@ int main(int argc, char *argv[]) {
 			Y_RES
 		);
 
+	state.pos.x = 4.0f;
+	state.pos.y = 7.0f;
+	state.dir = normalize((vec2f) {0.0f,1.0f});
+
 	while (!state.quit) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
@@ -75,7 +119,7 @@ int main(int argc, char *argv[]) {
 
 		SDL_RenderClear(state.renderer);
 
-		state.pixels[X_RES*64+128] = 0xFF0000FF;
+		state.pixels[X_RES*72+128] = 0xFF0000FF;
 
 		SDL_UpdateTexture(state.texture,
 			NULL,
