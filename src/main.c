@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 typedef float    f32;
 typedef double   f64;
@@ -67,9 +68,37 @@ static u8 MAP[MAP_SIZE^2] {
 }
 
 
-static void renderer() {
-	for (int x = 0; x < Y_RES; x++) {
-			
+static void render() {
+	for (int x = 0; x < X_RES; x++) {
+		f32 planex =  2 * (x / (f32) X_RES) - 1;
+
+		vec2f ray_vector = {
+			state.dir.x + (state.plane.x * planex),
+			state.dir.y + (state.plane.y * planex),	
+		}
+		
+		vec2f pos = state.pos;
+		vec2i posi = {(int)state.pos.x, (int)state.pos.y};
+	
+		//distance to first x and y cell intersect respectivly
+		vec2f delta_dist = {0,0};
+		
+		if (ray_vector.x>0) {
+			 delta_dist.x = sqrtf((((posi.x+1) - pos.x)^2) + ((ray_vector.y / ray_vector.x) * ((posi.x+1) - pos.x)^2));
+		} else if (ray_vector.x<0) {
+			 delta_dist.x = sqrtf(((pos.x-(f32)posi.x)^2) + ((ray_vector.y / ray_vector.x) * (pos.x-(f32)posi.x)^2));
+		}
+
+		if (ray_vector.y<0) {
+			 delta_dist.y = sqrtf((((posi.y+1) - pos.y)^2) + ((ray_vector.x / ray_vector.y) * ((posi.y+1) - pos.y)^2));
+		} else if (ray_vector.y>0) {
+			 delta_dist.y = sqrtf(((pos.y-(f32)posi.y)^2) + ((ray_vector.x / ray_vector.y) * (pos.y-(f32)posi.y)^2));
+		}
+
+		
+
+
+
 	}
 }
 
@@ -108,6 +137,7 @@ int main(int argc, char *argv[]) {
 	state.pos.x = 4.0f;
 	state.pos.y = 7.0f;
 	state.dir = normalize((vec2f) {0.0f,1.0f});
+	state.plane = normalize((vec2f) {state.dir.y,-state.dir.x});
 
 	while (!state.quit) {
 		SDL_Event event;
@@ -120,6 +150,7 @@ int main(int argc, char *argv[]) {
 		SDL_RenderClear(state.renderer);
 
 		state.pixels[X_RES*72+128] = 0xFF0000FF;
+		render();
 
 		SDL_UpdateTexture(state.texture,
 			NULL,
