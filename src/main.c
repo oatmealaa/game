@@ -20,8 +20,11 @@ typedef ssize_t  isize;
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 
-#define X_RES 256
-#define Y_RES 144
+#define X_RES 1280
+#define Y_RES 720
+
+#define MOVE_SPEED 0.04
+#define ROT_SPEED 0.04
 
 typedef struct vec2f_s {f32 x,y;} vec2f;
 typedef struct vec2i_s {i32 x,y;} vec2i;
@@ -38,19 +41,20 @@ static struct {
 	vec2f pos;
 	vec2f dir;
 	vec2f plane;
+	f32 dirangle;
 } state;	
 
 #define MAP_SIZE 8
 
 static u8 MAP[MAP_SIZE*MAP_SIZE] = {
-	1,0,1,0,1,0,1,1,
-	1,0,0,0,0,0,0,1,
-	1,0,0,0,0,0,0,1,
-	1,0,0,0,0,0,0,1,
-	1,0,0,0,0,0,0,1,
-	1,0,0,0,0,0,0,1,
-	1,0,0,0,0,0,0,1,
-	1,1,0,1,0,1,0,1,
+	1,0,1,0,1,0,1,0,
+	0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,
+	1,0,0,1,0,0,0,0,
+	0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,
+	0,1,0,1,0,1,0,1,
 };
 
 
@@ -64,10 +68,15 @@ static inline vec2f normalize(vec2f vec) {
 }
 
 static inline void drawLine(int x,u32 color ,f32 dist) {
-	for (int y = 72; y < 72+(72/(int)dist); y++) {
+	f32 stuff = 1/dist;
+	for (int y = 360; y < 360+(int)(360.0f*stuff); y++) {
+		if (y>=Y_RES) break;
 		state.pixels[X_RES*y+x] = color;
 	}
-	state.pixels[X_RES*72+x] = color;
+	for (int y = 360; y > 360-(int)(360.0f*stuff); y--) {
+		if (y<=0) break;
+		state.pixels[X_RES*y+x] = color;
+	}
 }
 
 
@@ -114,27 +123,33 @@ static void render() {
 		f32 max = 10.0f;
 		f32 distf = 0.0f;
 		vec2i current_tile = posi;
+		bool side = false;
 		while (!wall_hit&&distf<max) {
 			
 			if (dist.x<dist.y) {
 				current_tile.x += step_dir.x;
 				distf = dist.x;
 				dist.x += unit_length_ratio.x;
+				side = true;
 			} else {
 				current_tile.y += step_dir.y;
 				distf = dist.y;
 				dist.y += unit_length_ratio.y;
+				side = false;
 			}
 
 			if (current_tile.x < MAP_SIZE && current_tile.y < MAP_SIZE && current_tile.x >= 0 && current_tile.y >= 0 ) {
 				if (MAP[MAP_SIZE*current_tile.y+current_tile.x]) {
-							
-					printf("%i,",current_tile.x);
-					printf("%i,",current_tile.y);
-					printf("%i,",MAP[MAP_SIZE*current_tile.y+current_tile.x]);
-					printf("%i\n",(MAP_SIZE*current_tile.y+current_tile.x));
-
-					drawLine(x,0xFFFFFFFF,distf);
+					f32 plane_dist;
+					
+					if (side) {
+						plane_dist = dist.x - unit_length_ratio.x;
+						drawLine(x,0xFFFFFFFF,plane_dist);
+					} else {
+						plane_dist = dist.y - unit_length_ratio.y;
+						drawLine(x,0xFFEEEEEE,plane_dist);
+					}
+					break;
 				} 
 			} 
 
@@ -178,7 +193,8 @@ int main(int argc, char *argv[]) {
 
 	state.pos.x = 4.0f;
 	state.pos.y = 5.0f;
-	state.dir = normalize(((vec2f) {0.0f,-1.0f}));
+	state.dir = normalize(((vec2f) {1.0f,-1.0f}));
+	state.dirangle = 1;
 	state.plane = normalize(((vec2f) {state.dir.y,-state.dir.x}));
 
 	while (!state.quit) {
@@ -189,9 +205,36 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		SDL_RenderClear(state.renderer);
+		const u8 *key = SDL_GetKeyboardState(NULL);
 
-		state.pixels[X_RES*72+128] = 0xFF0000FF;
+		if (key[SDLK_UP&0xFFFF]) {
+			state.pos.x += state.dir.x*MOVE_SPEED;
+			state.pos.y += state.dir.y*MOVE_SPEED;
+		}
+
+
+		if (key[SDLK_DOWN&0xFFFF]) {
+			state.pos.x -= state.dir.x*MOVE_SPEED;
+			state.pos.y -= state.dir.y*MOVE_SPEED;
+		}
+
+		if (key[SDLK_RIGHT&0xFFFF]) {
+			state.dirangle -= ROT_SPEED;
+			state.dir.x = cos(state.dirangle);
+			state.dir.y = sin(state.dirangle);
+	        state.plane = normalize(((vec2f) {state.dir.y,-state.dir.x}));
+				
+		}
+
+		if (key[SDLK_LEFT&0xFFFF]) {
+			state.dirangle += ROT_SPEED;
+			state.dir.x = cos(state.dirangle);
+			state.dir.y = sin(state.dirangle);
+	        state.plane = normalize(((vec2f) {state.dir.y,-state.dir.x}));
+		}
+		SDL_RenderClear(state.renderer);
+		
+		memset(state.pixels,0,sizeof(state.pixels));
 		render();
 
 		SDL_UpdateTexture(state.texture,
