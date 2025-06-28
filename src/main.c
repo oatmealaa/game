@@ -26,20 +26,6 @@ typedef ssize_t  isize;
 typedef struct vec2f_s {f32 x,y;} vec2f;
 typedef struct vec2i_s {i32 x,y;} vec2i;
 
-#define dot(v0, v1)                  \
-    ({ const vec2f _v0 = (v0), _v1 = (v1); (_v0.x * _v1.x) + (_v0.y * _v1.y); })
-#define length(v) ({ const v2 _v = (v); sqrtf(dot(_v, _v)); })
-#define normalize(u) ({              \
-        const vec2f _u = (u);           \
-        const f32 l = length(_u);    \
-        (vec2f) { _u.x / l, _u.y / l }; \
-    })
-#define min(a, b) ({ __typeof__(a) _a = (a), _b = (b); _a < _b ? _a : _b; })
-#define max(a, b) ({ __typeof__(a) _a = (a), _b = (b); _a > _b ? _a : _b; })
-#define sign(a) ({                                       \
-        __typeof__(a) _a = (a);                          \
-        (__typeof__(a))(_a < 0 ? -1 : (_a > 0 ? 1 : 0)); \
-    })
 
 static struct {
 	SDL_Window* window;
@@ -56,15 +42,32 @@ static struct {
 
 #define MAP_SIZE 8
 
-static u8 MAP[MAP_SIZE^2] {
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,1,0,1,0,1,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
+static u8 MAP[MAP_SIZE*MAP_SIZE] = {
+	1,0,1,0,1,0,1,1,
+	1,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,1,
+	1,1,0,1,0,1,0,1,
+};
+
+
+static inline vec2f normalize(vec2f vec) {
+	f32 len = sqrt((vec.x*vec.x)+(vec.y*vec.y));
+	vec2f new = {
+		vec.x/fabs(len),
+		vec.y/fabs(len) 
+	};
+	return new;
+}
+
+static inline void drawLine(int x,u32 color ,f32 dist) {
+	for (int y = 72; y < 72+(72/(int)dist); y++) {
+		state.pixels[X_RES*y+x] = color;
+	}
+	state.pixels[X_RES*72+x] = color;
 }
 
 
@@ -75,28 +78,67 @@ static void render() {
 		vec2f ray_vector = {
 			state.dir.x + (state.plane.x * planex),
 			state.dir.y + (state.plane.y * planex),	
-		}
+		};
 		
 		vec2f pos = state.pos;
 		vec2i posi = {(int)state.pos.x, (int)state.pos.y};
-	
+
+		//ratio of change of 1 in axsis to length of ray
+		vec2f unit_length_ratio = {
+			sqrt(1+(ray_vector.y / ray_vector.x)*(ray_vector.y / ray_vector.x)),
+			sqrt(1+(ray_vector.x / ray_vector.y)*(ray_vector.x / ray_vector.y))
+		}; 
+		vec2i step_dir;
+
 		//distance to first x and y cell intersect respectivly
-		vec2f delta_dist = {0,0};
+		vec2f dist = {0,0};
 		
-		if (ray_vector.x>0) {
-			 delta_dist.x = sqrtf((((posi.x+1) - pos.x)^2) + ((ray_vector.y / ray_vector.x) * ((posi.x+1) - pos.x)^2));
-		} else if (ray_vector.x<0) {
-			 delta_dist.x = sqrtf(((pos.x-(f32)posi.x)^2) + ((ray_vector.y / ray_vector.x) * (pos.x-(f32)posi.x)^2));
+		if (ray_vector.x>0.0f) {
+			step_dir.x = 1;
+			dist.x = (((f32)posi.x+1.0f) - pos.x) * unit_length_ratio.x;
+		} else if (ray_vector.x<0.0f) {
+			step_dir.x = -1;
+			dist.x = (pos.x - (f32) posi.x) * unit_length_ratio.x;
 		}
 
-		if (ray_vector.y<0) {
-			 delta_dist.y = sqrtf((((posi.y+1) - pos.y)^2) + ((ray_vector.x / ray_vector.y) * ((posi.y+1) - pos.y)^2));
-		} else if (ray_vector.y>0) {
-			 delta_dist.y = sqrtf(((pos.y-(f32)posi.y)^2) + ((ray_vector.x / ray_vector.y) * (pos.y-(f32)posi.y)^2));
+		if (ray_vector.y<0.0f) {
+			step_dir.y = -1;
+			dist.y = (pos.y - (f32) posi.y) * unit_length_ratio.y;
+
+		} else if (ray_vector.y>0.0f) {
+			step_dir.y = 1;
+			dist.y = (((f32)posi.y+1.0f) - pos.y) * unit_length_ratio.y;
 		}
 
-		
+		bool wall_hit = false;
+		f32 max = 10.0f;
+		f32 distf = 0.0f;
+		vec2i current_tile = posi;
+		while (!wall_hit&&distf<max) {
+			
+			if (dist.x<dist.y) {
+				current_tile.x += step_dir.x;
+				distf = dist.x;
+				dist.x += unit_length_ratio.x;
+			} else {
+				current_tile.y += step_dir.y;
+				distf = dist.y;
+				dist.y += unit_length_ratio.y;
+			}
 
+			if (current_tile.x < MAP_SIZE && current_tile.y < MAP_SIZE && current_tile.x >= 0 && current_tile.y >= 0 ) {
+				if (MAP[MAP_SIZE*current_tile.y+current_tile.x]) {
+							
+					printf("%i,",current_tile.x);
+					printf("%i,",current_tile.y);
+					printf("%i,",MAP[MAP_SIZE*current_tile.y+current_tile.x]);
+					printf("%i\n",(MAP_SIZE*current_tile.y+current_tile.x));
+
+					drawLine(x,0xFFFFFFFF,distf);
+				} 
+			} 
+
+		}
 
 
 	}
@@ -135,9 +177,9 @@ int main(int argc, char *argv[]) {
 		);
 
 	state.pos.x = 4.0f;
-	state.pos.y = 7.0f;
-	state.dir = normalize((vec2f) {0.0f,1.0f});
-	state.plane = normalize((vec2f) {state.dir.y,-state.dir.x});
+	state.pos.y = 5.0f;
+	state.dir = normalize(((vec2f) {0.0f,-1.0f}));
+	state.plane = normalize(((vec2f) {state.dir.y,-state.dir.x}));
 
 	while (!state.quit) {
 		SDL_Event event;
@@ -172,6 +214,8 @@ int main(int argc, char *argv[]) {
             SDL_FLIP_VERTICAL);
  
 		SDL_RenderPresent(state.renderer);
+
+		//state.quit = true;
 
 	}
 	

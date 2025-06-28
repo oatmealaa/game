@@ -5,7 +5,19 @@ LD = gcc
 
 # library paths
 
-CCFLAGS = 
+CCFLAGS =
+
+CCFLAGS  = -std=c2x
+CCFLAGS += -O2
+CCFLAGS += -g
+CCFLAGS += -Wall
+CCFLAGS += -Wextra
+CCFLAGS += -Wpedantic
+CCFLAGS += -Wfloat-equal
+CCFLAGS += -Wstrict-aliasing
+CCFLAGS += -Wswitch-default
+CCFLAGS += -Wformat=2
+CCFLAGS += -Wno-unused-parameter
 
 LDFLAGS = -lm
 
@@ -23,7 +35,7 @@ dirs:
 	mkdir -p bin
 
 %.o: %.c
-	$(CC) -o $@ -c $< $(CCFLAGS)
+	$(CC) -o $@ -MMD -c $< $(CCFLAGS)
 
 
 game: dirs $(OBJ)
