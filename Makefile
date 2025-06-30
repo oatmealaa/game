@@ -42,6 +42,6 @@ game: dirs $(OBJ)
 	$(LD) -o bin/game $(OBJ) $(LDFLAGS)
 
 clean:
-	rm -rf bin
+	rm bin/game
 	rm src/*.o
 	rm src/*.d

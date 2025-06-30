@@ -18,8 +18,8 @@ typedef ssize_t  isize;
 
 // 360x180
 
-#define X_RES 1280
-#define Y_RES 720
+#define X_RES 360
+#define Y_RES 180
 
 #define CENTER_Y Y_RES/2
 
@@ -46,6 +46,7 @@ struct state_s {
 	vec2f dir;
 	vec2f plane;
 	f32 dirangle;
+
 };	
 
 extern struct state_s state;
