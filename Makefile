@@ -44,3 +44,4 @@ game: dirs $(OBJ)
 clean:
 	rm -rf bin
 	rm src/*.o
+	rm src/*.d
