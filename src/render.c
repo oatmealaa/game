@@ -88,6 +88,7 @@ void render() {
 		f32 distf = 0.0f;
 		vec2i current_tile = posi;
 		bool side = false;
+		i32 hit = 0;
 		while (!wall_hit&&distf<max) {
 			
 			if (dist.x<dist.y) {
@@ -104,58 +105,47 @@ void render() {
 
 			if (current_tile.x < MAP_SIZE && current_tile.y < MAP_SIZE && current_tile.x >= 0 && current_tile.y >= 0 ) {
 				if (MAP[MAP_SIZE*current_tile.y+current_tile.x]) {
-					/*
-					vec2f d = {
-						(ray_vector.x == 0) ? 1e30 : fabs(1/ray_vector.x),
-						(ray_vector.y == 0) = 1e30 : fabs(1/ray_vector.y)
-					};
-					*/
-
-					f32 plane_dist;
-					//vec2f cooking = {ray_vector.x-state.dir.x,ray_vector.y-state.dir.y};
-					//f32 plane_dist = distf-sqrt((cooking.x*cooking.x)+(cooking.y*cooking.y));
-					//plane_dist = distf*((normalize(ray_vector).x*distf)/distf);
-		
-
-					vec2f good_ray_vector = {
-						0.0f + (state.plane.x*planex),
-						1.0f + (state.plane.y*planex)
-					};
-
-
-					plane_dist = distf*good_ray_vector.y/sqrt((good_ray_vector.x*good_ray_vector.x)+(good_ray_vector.y*good_ray_vector.y));
-
-					vec2f normal_ray = normalize(ray_vector);
-
-					vec2f hit_vector = {
-						normal_ray.x*distf,
-						normal_ray.y*distf
-					};
-
-					vec2f hit_pos = {
-						pos.x+hit_vector.x,
-						pos.y+hit_vector.y
-					};
-
-					f32 grid_offset;
-					
-
-
-					if (!side) {
-						grid_offset = hit_pos.x-(f32)((int)hit_pos.x);
-						drawLine(x,0xFFFF00FF,plane_dist,grid_offset,MAP[MAP_SIZE*current_tile.y+current_tile.x]-1);
-					} else {
-						//plane_dist = dist.y - d.y;
-						grid_offset = hit_pos.y-(f32)((int)hit_pos.y);
-						drawLine(x,0xFFEE00EE,plane_dist,grid_offset,MAP[MAP_SIZE*current_tile.y+current_tile.x]-1);
-					}
+					hit = MAP[MAP_SIZE*current_tile.y+current_tile.x];
 					break;
 				} 
 			} 
 
 		}
+		
+		if (!hit) continue;
+
+		f32 plane_dist;
+	
+		vec2f good_ray_vector = {
+			0.0f + (state.plane.x*planex),
+			1.0f + (state.plane.y*planex)
+		};
 
 
+		plane_dist = distf*good_ray_vector.y/sqrt((good_ray_vector.x*good_ray_vector.x)+(good_ray_vector.y*good_ray_vector.y));
+
+		vec2f normal_ray = normalize(ray_vector);
+
+		vec2f hit_vector = {
+		normal_ray.x*distf,
+		normal_ray.y*distf
+		};
+
+		vec2f hit_pos = {
+			pos.x+hit_vector.x,
+			pos.y+hit_vector.y
+		};
+
+		f32 grid_offset;
+					
+
+		if (!side) {
+			grid_offset = hit_pos.x-(f32)((int)hit_pos.x);
+			drawLine(x,0xFFFF00FF,plane_dist,grid_offset,MAP[MAP_SIZE*current_tile.y+current_tile.x]-1);
+		} else {
+			grid_offset = hit_pos.y-(f32)((int)hit_pos.y);
+			drawLine(x,0xFFEE00EE,plane_dist,grid_offset,MAP[MAP_SIZE*current_tile.y+current_tile.x]-1);
+		}
 	}
 }
 
