@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <stdio.h>
+#include <time.h>
 #include "main.h"
 #include "utils.h"
 #include "render.h"
@@ -9,49 +11,24 @@
 
 struct state_s state;
 
+
 u8 MAP[MAP_SIZE*MAP_SIZE] = {
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,2,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,3,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,2,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,2,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,2,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,2,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,2,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,3,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 };
 
 
@@ -76,7 +53,7 @@ int main(int argc, char *argv[]) {
 			SDL_WINDOWPOS_CENTERED,
 			WINDOW_WIDTH,
 			WINDOW_HEIGHT,
-			0
+			SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_MOUSE_GRABBED | SDL_WINDOW_MOUSE_FOCUS
 		);
 	state.renderer =
 		SDL_CreateRenderer(
@@ -94,47 +71,110 @@ int main(int argc, char *argv[]) {
 			Y_RES
 		);
 
+	SDL_ShowCursor(SDL_DISABLE);
+
 	state.pos.x = 4.0f;
 	state.pos.y = 5.0f;
 	state.dir = normalize(((vec2f) {1.0f,-1.0f}));
 	state.dirangle = 1;
 	state.plane = (vec2f) {state.dir.y*FOV_FACTORX,-state.dir.x*FOV_FACTORX};
+	state.mousex = 0;
+	state.mousey = 0;
 
+	bool w,a,s,d;
+	w = false;
+	s = false;
+	a = false;
+	d = false;
+
+	vec2f move;
+
+	clock_t clockk = clock();
 	while (!state.quit) {
+
+
+
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT) {
 				state.quit = true;	
 			}
+
+			if (event.key.keysym.scancode == SDL_SCANCODE_W&&event.key.state==SDL_PRESSED) {
+				w = true;
+			}
+
+			if (event.key.keysym.scancode == SDL_SCANCODE_W&&event.key.state==SDL_RELEASED) {
+				w = false;
+			}
+
+			if (event.key.keysym.scancode == SDL_SCANCODE_S&&event.key.state==SDL_PRESSED) {
+				s = true;
+			}
+
+			if (event.key.keysym.scancode == SDL_SCANCODE_S&&event.key.state==SDL_RELEASED) {
+				s = false;
+			}
+
+			if (event.key.keysym.scancode == SDL_SCANCODE_A&&event.key.state==SDL_PRESSED) {
+				a = true;
+			}
+
+			if (event.key.keysym.scancode == SDL_SCANCODE_A&&event.key.state==SDL_RELEASED) {
+				a = false;
+			}
+
+			if (event.key.keysym.scancode == SDL_SCANCODE_D&&event.key.state==SDL_PRESSED) {
+				d = true;
+			}
+
+			if (event.key.keysym.scancode == SDL_SCANCODE_D&&event.key.state==SDL_RELEASED) {
+				d = false;
+			}
+
+
+
+
 		}
 
+		
+		state.delta_time = difftime(clock(),clockk)/CLOCKS_PER_SEC;
+		clockk = clock();
+		
+		printf("%f\n",1/state.delta_time);
 		const u8 *key = SDL_GetKeyboardState(NULL);
+		
+		SDL_GetMouseState(&state.mousex,&state.mousey);
+		SDL_WarpMouseInWindow(state.window,WINDOW_WIDTH/2,WINDOW_HEIGHT/2);
 
-		if (key[SDLK_UP&0xFFFF]) {
-			state.pos.x += state.dir.x*MOVE_SPEED;
-			state.pos.y += state.dir.y*MOVE_SPEED;
+		state.dirangle -= (state.mousex-(WINDOW_WIDTH/2))*ROT_SPEED;
+
+		state.dir.x = cos(state.dirangle);
+		state.dir.y = sin(state.dirangle);
+	    state.plane = (vec2f) {state.dir.y*FOV_FACTORX,-state.dir.x*FOV_FACTORX};
+		
+		if (w) {
+			state.pos.x += state.dir.x*MOVE_SPEED*state.delta_time;
+			state.pos.y += state.dir.y*MOVE_SPEED*state.delta_time;
+		}
+
+		if (s) {
+			state.pos.x -= state.dir.x*MOVE_SPEED*state.delta_time;
+			state.pos.y -= state.dir.y*MOVE_SPEED*state.delta_time;
+		}
+
+		if (a) {
+			state.pos.x -= state.dir.y*MOVE_SPEED*state.delta_time;
+			state.pos.y += state.dir.x*MOVE_SPEED*state.delta_time;
+		}
+
+		if (d) {
+			state.pos.x += state.dir.y*MOVE_SPEED*state.delta_time;
+			state.pos.y -= state.dir.x*MOVE_SPEED*state.delta_time;
 		}
 
 
-		if (key[SDLK_DOWN&0xFFFF]) {
-			state.pos.x -= state.dir.x*MOVE_SPEED;
-			state.pos.y -= state.dir.y*MOVE_SPEED;
-		}
 
-		if (key[SDLK_RIGHT&0xFFFF]) {
-			state.dirangle -= ROT_SPEED;
-			state.dir.x = cos(state.dirangle);
-			state.dir.y = sin(state.dirangle);
-	        state.plane = (vec2f) {state.dir.y*FOV_FACTORX,-state.dir.x*FOV_FACTORX};
-				
-		}
-
-		if (key[SDLK_LEFT&0xFFFF]) {
-			state.dirangle += ROT_SPEED;
-			state.dir.x = cos(state.dirangle);
-			state.dir.y = sin(state.dirangle);
-	        state.plane = (vec2f) {state.dir.y*FOV_FACTORX,-state.dir.x*FOV_FACTORX};
-		}
 		SDL_RenderClear(state.renderer);
 		
 		memset(state.pixels,0,sizeof(state.pixels));

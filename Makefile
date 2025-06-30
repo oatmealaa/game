@@ -7,9 +7,6 @@ LD = gcc
 
 CCFLAGS =
 
-CCFLAGS  = -std=c2x
-CCFLAGS += -O2
-CCFLAGS += -g
 CCFLAGS += -Wall
 CCFLAGS += -Wextra
 CCFLAGS += -Wpedantic

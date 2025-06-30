@@ -18,13 +18,13 @@ typedef ssize_t  isize;
 
 // 360x180
 
-#define X_RES 360
-#define Y_RES 180
+#define X_RES 1280
+#define Y_RES 720
 
 #define CENTER_Y Y_RES/2
 
-#define MOVE_SPEED 0.04
-#define ROT_SPEED 0.04
+#define MOVE_SPEED 5
+#define ROT_SPEED 0.01
 
 #define VIEW_DISTANCE 100.0f
 #define FOV_FACTORX 0.6f
@@ -46,12 +46,13 @@ struct state_s {
 	vec2f dir;
 	vec2f plane;
 	f32 dirangle;
-
+	f32 delta_time;
+	i32 mousex,mousey;
 };	
 
 extern struct state_s state;
 
-#define MAP_SIZE 42
+#define MAP_SIZE 16
 
 extern u8 MAP[MAP_SIZE*MAP_SIZE];
 

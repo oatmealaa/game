@@ -7,7 +7,7 @@
 #include "render.h"
 #include "texture.h"
 
-void drawLine(int x,u32 color ,f32 dist, f32 hit_grid_offset, u32 texture_id) {
+void drawLine(int x,u32 color ,f32 dist, f32 hit_grid_offset, u32 texture_id, u32 color_offset) {
 	f32 rep = 1/dist;
 	i32 height = (int)((f32)X_RES*rep)*FOV_FACTORY;
 	
@@ -18,26 +18,26 @@ void drawLine(int x,u32 color ,f32 dist, f32 hit_grid_offset, u32 texture_id) {
 	i32 text_vres = textures.array[texture_id*sizeof(texture)].vres;
 	u32* pixels = textures.array[texture_id*sizeof(texture)].pixels;
 
-	for (int y = CENTER_Y; y < top; y++) {
-		if (y>=Y_RES) break;
-		
-		f32 voffset = (f32)(y-bottom)/(f32)(top-bottom);
-		
+	f32 voffset = 0;
+	u32 text_posy = 0;
+	u32 text_posx = 0;
 
-		u32 text_posy = (u32)((f32)text_vres*voffset);
-		u32 text_posx = (u32)((f32)text_hres*hit_grid_offset);
-
-		state.pixels[X_RES*y+x] = pixels[(text_posy*text_vres+text_posx)];
+	for (int y = 0; y < Y_RES; y++) {
+		if (y<Y_RES/2) {
+			state.pixels[X_RES*y+x] = 0xFF999999;
+		} else {
+			state.pixels[X_RES*y+x] = 0xFFDDDDDD;
+		}
 	}
-	for (int y = CENTER_Y; y > bottom; y--) {
-		
 
+	for (int y = bottom; y < top; y++) {
+		if (y<=0) continue;
+		if (y>=Y_RES) break;
 
-		if (y<=0) break;
-		f32 voffset = (f32)(y-bottom)/(f32)(top-bottom);
+		voffset = (f32)(y-bottom)/(f32)(top-bottom);
 
-		u32 text_posy = (u32)((f32)text_vres*voffset);
-		u32 text_posx = (u32)((f32)text_hres*hit_grid_offset);
+		text_posy = (u32)((f32)text_vres*voffset);
+		text_posx = (u32)((f32)text_hres*hit_grid_offset);
 
 		state.pixels[X_RES*y+x] = pixels[(text_posy*text_vres+text_posx)];
 
@@ -141,10 +141,10 @@ void render() {
 
 		if (!side) {
 			grid_offset = hit_pos.x-(f32)((int)hit_pos.x);
-			drawLine(x,0xFFFF00FF,plane_dist,grid_offset,MAP[MAP_SIZE*current_tile.y+current_tile.x]-1);
+			drawLine(x,0xFFFF00FF,plane_dist,grid_offset,MAP[MAP_SIZE*current_tile.y+current_tile.x]-1,0xFF000000);
 		} else {
 			grid_offset = hit_pos.y-(f32)((int)hit_pos.y);
-			drawLine(x,0xFFEE00EE,plane_dist,grid_offset,MAP[MAP_SIZE*current_tile.y+current_tile.x]-1);
+			drawLine(x,0xFFEE00EE,plane_dist,grid_offset,MAP[MAP_SIZE*current_tile.y+current_tile.x]-1,0xFF000000);
 		}
 	}
 }
