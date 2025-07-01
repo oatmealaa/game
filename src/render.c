@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "render.h"
 #include "texture.h"
+#include "entities.h"
 
 typedef enum draw_type_e {
 	LINE,
@@ -31,9 +32,14 @@ struct {
 void drawLine(int x,f32 dist, f32 hit_grid_offset, u32 texture_id, u32 color_offset) {
 	f32 rep = 1/dist;
 	i32 height = (int)((f32)X_RES*rep)*FOV_FACTORY;
-	
-	i32 top = CENTER_Y+(height/2);
-	i32 bottom = CENTER_Y-(height/2);
+	if (texture_id>=textures.len) {
+		printf("Texture %d not found\n",texture_id);
+	}
+
+
+
+	i32 top = CENTER_Y+(height/2)+state.pan_y;
+	i32 bottom = CENTER_Y-(height/2)+state.pan_y;
 
 	i32 text_hres = textures.array[texture_id].hres;
 	i32 text_vres = textures.array[texture_id].vres;
@@ -44,7 +50,7 @@ void drawLine(int x,f32 dist, f32 hit_grid_offset, u32 texture_id, u32 color_off
 	u32 text_posx = 0;
 
 	for (int y = 0; y < Y_RES; y++) {
-		if (y<Y_RES/2) {
+		if (y<(Y_RES/2)+state.pan_y) {
 			state.pixels[X_RES*y+x] = 0xFF999999;
 		} else {
 			state.pixels[X_RES*y+x] = 0xFFDDDDDD;
@@ -65,10 +71,56 @@ void drawLine(int x,f32 dist, f32 hit_grid_offset, u32 texture_id, u32 color_off
 	}
 }
 
+void drawEntity(vec2i posc,f32 dist,u32 texture_id, u32 color_offset) {
+	f32 scale = 1/dist;
+	i32 text_x;
+	i32 text_y;
+	if (texture_id>=textures.len) {
+		printf("Texture %d not found\n",texture_id);
+	}
+
+	i32 text_hres = textures.array[texture_id].hres;
+	i32 text_vres = textures.array[texture_id].vres;
+	u32* pixels = textures.array[texture_id].pixels;
+	f32 xf;
+	f32 yf;
+
+	i32 width = (i32)((f32)X_RES*scale);
+	i32 height = (i32)((f32)Y_RES*scale);
+		
+	vec2i pos = (vec2i) {
+		posc.x-(i32)((f32)(X_RES/2)*scale),
+		posc.y-(i32)((f32)(Y_RES/2)*(scale))+state.pan_y
+	};
+
+	for (i32 x = pos.x; x < width+pos.x; x++) {
+		if (x >= X_RES-1||x<0) continue;
+		xf = (x-pos.x)/((f32)X_RES*scale);
+		text_x = (u32)((f32)text_hres*xf);
+		if (text_x > text_hres) continue;
+		for (i32 y = pos.y; y < height+pos.y; y++) {
+			if (y >= Y_RES-1||y<0) continue;
+			yf = (y-pos.y)/((f32)Y_RES*scale);
+			text_y = (u32)((f32)text_vres*yf);
+			if (text_y > text_vres) break;
+			if (pixels[text_vres*text_y+text_x]==0x00000000) continue;
+			state.pixels[X_RES*y+x] = pixels[text_vres*text_y+text_x];
+		}
+	
+	}
+}
+
+int comp(const void* a,const void* b) {
+	draw_target* A = (draw_target*)b;
+	draw_target* B = (draw_target*)a; 
+
+	return (i32)(A->dist - B->dist);
+}
+
 void render() {
 
 	draw_order.length = 0;	
-	draw_order.targets = calloc(X_RES,sizeof(draw_target));
+	draw_order.targets = calloc(X_RES+10,sizeof(draw_target));
 
 	for (int x = 0; x < X_RES; x++) {
 		f32 planex =  2 * (x / (f32) X_RES) - 1;
@@ -186,10 +238,51 @@ void render() {
 			target.hit_grid_offset = grid_offset;
 			target.texture_id = MAP[MAP_SIZE*current_tile.y+current_tile.x]-1;
 			target.color_offset = 0xFF000000;
-			memcpy(&draw_order.targets[draw_order.length],&target,sizeof(target));
+			memcpy(&draw_order.targets[draw_order.length],&target,sizeof(draw_target));
 			draw_order.length++;
 		}
 	}
+
+
+	
+	for (u32 i = 0; i<entities.len;i++) {
+		draw_target entity;	
+		
+		entity.texture_id = entities.array[i].texture_id;
+		vec2f pos = entities.array[i].pos;
+		
+		vec2f diff = (vec2f) {
+			pos.x-state.pos.x,
+			pos.y-state.pos.y
+		};
+		
+
+		f32 dot = (state.dir.x*diff.x)+(state.dir.y*diff.y);
+		f32 det = (state.dir.x*diff.y)-(state.dir.y*diff.x);
+
+		f32 angle = atan2(det,dot);
+		
+		f32 fovx = atan(FOV_FACTORX/1);
+
+
+		
+		f32 f = (angle+fovx)/(fovx*2);
+		f = (f-1)*-1;	
+
+		entity.pos.x = (i32)((f32)X_RES*f);
+		entity.pos.y = (i32)((f32)Y_RES/2);
+		entity.dist = sqrt((diff.x*diff.x)+(diff.y*diff.y));
+		entity.color_offset = 0x00000000;
+		entity.type = ENTITY;
+		
+		if (f<-0.5||f>1.5) continue;
+		//drawEntity((vec2i){entity.pos.x,Y_RES/2},entity.dist,entity.texture_id,0);
+		memcpy(&draw_order.targets[draw_order.length],&entity,sizeof(draw_target));
+		draw_order.length++;
+
+	}
+
+	qsort(draw_order.targets,draw_order.length,sizeof(draw_target),comp);
 
 	for (int i = 0; i < draw_order.length; i++) {
 		draw_target target = draw_order.targets[i];
@@ -198,8 +291,14 @@ void render() {
 			drawLine(target.x,target.dist,target.hit_grid_offset,target.texture_id,target.color_offset);
 			
 		}
+
+		if (type == ENTITY) {
+			drawEntity(target.pos,target.dist,target.texture_id,target.color_offset);
+		}
 	}
 
+
+	
 	free(draw_order.targets);
 }
 

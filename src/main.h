@@ -16,7 +16,7 @@ typedef ssize_t  isize;
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 
-// 360x180
+// 320x180
 
 #define X_RES 640
 #define Y_RES 360
@@ -25,6 +25,7 @@ typedef ssize_t  isize;
 
 #define MOVE_SPEED 5
 #define ROT_SPEED 0.01
+#define PAN_SPEED 1.2
 
 #define VIEW_DISTANCE 100.0f
 #define FOV_FACTORX 0.6f
@@ -48,6 +49,8 @@ struct state_s {
 	f32 dirangle;
 	f32 delta_time;
 	i32 mousex,mousey;
+	f32 fixed_delta_time;
+	i32 pan_y;
 };	
 
 extern struct state_s state;

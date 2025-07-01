@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "render.h"
 #include "texture.h"
+#include "entities.h"
 
 struct state_s state;
 
@@ -22,7 +23,7 @@ u8 MAP[MAP_SIZE*MAP_SIZE] = {
 	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
 	1,0,0,0,0,0,0,2,0,0,0,0,0,0,0,1,
 	1,0,0,0,0,0,0,3,0,0,0,0,0,0,0,1,
-	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+	1,0,0,0,0,0,0,4,0,0,0,0,0,0,0,1,
 	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
 	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
 	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
@@ -31,6 +32,105 @@ u8 MAP[MAP_SIZE*MAP_SIZE] = {
 	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 };
 
+clock_t clock1;
+clock_t clock2;
+bool w = false;
+bool s = false;
+bool a = false;
+bool d = false;
+
+void fixedUpdate() {
+	state.fixed_delta_time = difftime(clock(),clock1)/CLOCKS_PER_SEC;
+	clock1 = clock();
+
+
+	#ifdef __linux
+	system("clear"); 
+	#else
+	system("cls");
+	#endif
+
+	printf("%f fps\n",1/state.delta_time);
+	printf("%f fixed fps\n",1/state.fixed_delta_time);
+
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+		if (event.type == SDL_QUIT) {
+			state.quit = true;	
+		}
+		if (event.key.keysym.scancode == SDL_SCANCODE_W&&event.key.state==SDL_PRESSED) {
+			w = true;
+		}
+
+		if (event.key.keysym.scancode == SDL_SCANCODE_W&&event.key.state==SDL_RELEASED) {
+			w = false;
+		}
+
+		if (event.key.keysym.scancode == SDL_SCANCODE_S&&event.key.state==SDL_PRESSED) {
+			s = true;
+		}
+
+		if (event.key.keysym.scancode == SDL_SCANCODE_S&&event.key.state==SDL_RELEASED) {
+			s = false;
+		}
+
+		if (event.key.keysym.scancode == SDL_SCANCODE_A&&event.key.state==SDL_PRESSED) {
+			a = true;
+		}
+
+		if (event.key.keysym.scancode == SDL_SCANCODE_A&&event.key.state==SDL_RELEASED) {
+			a = false;
+		}
+
+		if (event.key.keysym.scancode == SDL_SCANCODE_D&&event.key.state==SDL_PRESSED) {
+			d = true;
+		}
+
+		if (event.key.keysym.scancode == SDL_SCANCODE_D&&event.key.state==SDL_RELEASED) {
+			d = false;
+		}
+
+	}
+
+		
+	
+		const u8 *key = SDL_GetKeyboardState(NULL);
+		
+		SDL_GetMouseState(&state.mousex,&state.mousey);
+		SDL_WarpMouseInWindow(state.window,WINDOW_WIDTH/2,WINDOW_HEIGHT/2);
+
+		state.dirangle -= (state.mousex-(WINDOW_WIDTH/2))*ROT_SPEED;	
+		state.pan_y += (state.mousey-(WINDOW_HEIGHT/2))*PAN_SPEED;	
+
+		state.dir.x = cos(state.dirangle);
+		state.dir.y = sin(state.dirangle);
+	    state.plane = (vec2f) {state.dir.y*FOV_FACTORX,-state.dir.x*FOV_FACTORX};
+		
+		if (w) {
+			state.pos.x += state.dir.x*MOVE_SPEED*state.fixed_delta_time;
+			state.pos.y += state.dir.y*MOVE_SPEED*state.fixed_delta_time;
+		}
+
+		if (s) {
+			state.pos.x -= state.dir.x*MOVE_SPEED*state.fixed_delta_time;
+			state.pos.y -= state.dir.y*MOVE_SPEED*state.fixed_delta_time;
+		}
+
+		if (a) {
+			state.pos.x -= state.dir.y*MOVE_SPEED*state.fixed_delta_time;
+			state.pos.y += state.dir.x*MOVE_SPEED*state.fixed_delta_time;
+		}
+
+		if (d) {
+			state.pos.x += state.dir.y*MOVE_SPEED*state.fixed_delta_time;
+			state.pos.y -= state.dir.x*MOVE_SPEED*state.fixed_delta_time;
+		}
+
+
+	updateEntities();
+	
+
+}
 
 
 
@@ -45,6 +145,7 @@ int main(int argc, char *argv[]) {
 	}
 	
 	loadTextures();
+	setupEntities();
 
 	state.window =
 		SDL_CreateWindow(
@@ -81,106 +182,23 @@ int main(int argc, char *argv[]) {
 	state.mousex = 0;
 	state.mousey = 0;
 
-	bool w,a,s,d;
-	w = false;
-	s = false;
-	a = false;
-	d = false;
+	f32 fixed_timec;
 
 	vec2f move;
 
-	clock_t clockk = clock();
+	clock2 = clock();
 	while (!state.quit) {
 
 
 
-		SDL_Event event;
-		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT) {
-				state.quit = true;	
-			}
-
-			if (event.key.keysym.scancode == SDL_SCANCODE_W&&event.key.state==SDL_PRESSED) {
-				w = true;
-			}
-
-			if (event.key.keysym.scancode == SDL_SCANCODE_W&&event.key.state==SDL_RELEASED) {
-				w = false;
-			}
-
-			if (event.key.keysym.scancode == SDL_SCANCODE_S&&event.key.state==SDL_PRESSED) {
-				s = true;
-			}
-
-			if (event.key.keysym.scancode == SDL_SCANCODE_S&&event.key.state==SDL_RELEASED) {
-				s = false;
-			}
-
-			if (event.key.keysym.scancode == SDL_SCANCODE_A&&event.key.state==SDL_PRESSED) {
-				a = true;
-			}
-
-			if (event.key.keysym.scancode == SDL_SCANCODE_A&&event.key.state==SDL_RELEASED) {
-				a = false;
-			}
-
-			if (event.key.keysym.scancode == SDL_SCANCODE_D&&event.key.state==SDL_PRESSED) {
-				d = true;
-			}
-
-			if (event.key.keysym.scancode == SDL_SCANCODE_D&&event.key.state==SDL_RELEASED) {
-				d = false;
-			}
-
-
-
-
-		}
-
-		
-		state.delta_time = difftime(clock(),clockk)/CLOCKS_PER_SEC;
-		clockk = clock();
+		state.delta_time = difftime(clock(),clock2)/CLOCKS_PER_SEC;
+		clock2 = clock();
 	
-		#ifdef __linux
-		system("clear"); 
-		#else
-		system("cls");
-		#endif
-
-		printf("%f fps\n",1/state.delta_time);
-
-		const u8 *key = SDL_GetKeyboardState(NULL);
-		
-		SDL_GetMouseState(&state.mousex,&state.mousey);
-		SDL_WarpMouseInWindow(state.window,WINDOW_WIDTH/2,WINDOW_HEIGHT/2);
-
-		state.dirangle -= (state.mousex-(WINDOW_WIDTH/2))*ROT_SPEED;
-
-		state.dir.x = cos(state.dirangle);
-		state.dir.y = sin(state.dirangle);
-	    state.plane = (vec2f) {state.dir.y*FOV_FACTORX,-state.dir.x*FOV_FACTORX};
-		
-		if (w) {
-			state.pos.x += state.dir.x*MOVE_SPEED*state.delta_time;
-			state.pos.y += state.dir.y*MOVE_SPEED*state.delta_time;
+		fixed_timec += state.delta_time;
+		if (fixed_timec>=1.0f/60.0f) {
+			fixed_timec=0;
+			fixedUpdate();
 		}
-
-		if (s) {
-			state.pos.x -= state.dir.x*MOVE_SPEED*state.delta_time;
-			state.pos.y -= state.dir.y*MOVE_SPEED*state.delta_time;
-		}
-
-		if (a) {
-			state.pos.x -= state.dir.y*MOVE_SPEED*state.delta_time;
-			state.pos.y += state.dir.x*MOVE_SPEED*state.delta_time;
-		}
-
-		if (d) {
-			state.pos.x += state.dir.y*MOVE_SPEED*state.delta_time;
-			state.pos.y -= state.dir.x*MOVE_SPEED*state.delta_time;
-		}
-
-
 
 		SDL_RenderClear(state.renderer);
 		

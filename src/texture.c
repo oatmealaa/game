@@ -10,11 +10,12 @@
 #include "render.h"
 #include "texture.h"
 
-#define TEXTURES_AMT 3
+#define TEXTURES_AMT 4
 static char* texture_paths[TEXTURES_AMT] = 
 	{"data/wall.bmp",
 	"data/wall2.bmp",
-	"data/Untitled.bmp"};
+	"data/Untitled.bmp",
+	"data/crab.bmp"};
 
 struct textures_s textures;
 
@@ -28,8 +29,8 @@ static void parseBitmap(int index,FILE* fptr) {
 	fseek(fptr,0,SEEK_SET);
 	fread(buff,1,0x1A,fptr);
 	
-	memcpy(&width,buff+0x12,sizeof(i32));
-	memcpy(&height,buff+0x16,sizeof(i32));
+	memcpy(&width,buff+0x16,sizeof(i32));
+	memcpy(&height,buff+0x12,sizeof(i32));
 	memcpy(&pixel_array_offset,buff+0x0A,sizeof(i32));
 	memcpy(&file_size,buff+0x02,sizeof(i32));
 	
