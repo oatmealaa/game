@@ -18,8 +18,8 @@ typedef ssize_t  isize;
 
 // 360x180
 
-#define X_RES 1280
-#define Y_RES 720
+#define X_RES 640
+#define Y_RES 360
 
 #define CENTER_Y Y_RES/2
 

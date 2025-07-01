@@ -140,8 +140,15 @@ int main(int argc, char *argv[]) {
 		
 		state.delta_time = difftime(clock(),clockk)/CLOCKS_PER_SEC;
 		clockk = clock();
-		
-		printf("%f\n",1/state.delta_time);
+	
+		#ifdef __linux
+		system("clear"); 
+		#else
+		system("cls");
+		#endif
+
+		printf("%f fps\n",1/state.delta_time);
+
 		const u8 *key = SDL_GetKeyboardState(NULL);
 		
 		SDL_GetMouseState(&state.mousex,&state.mousey);

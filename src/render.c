@@ -7,16 +7,37 @@
 #include "render.h"
 #include "texture.h"
 
-void drawLine(int x,u32 color ,f32 dist, f32 hit_grid_offset, u32 texture_id, u32 color_offset) {
+typedef enum draw_type_e {
+	LINE,
+	ENTITY,
+} dtype;
+
+typedef struct draw_target_s {
+	dtype type;
+	vec2i pos;
+	i32 x;
+	f32 dist;
+	f32 hit_grid_offset;
+	u32 texture_id;
+	u32 color_offset;
+	
+} draw_target;
+
+struct {
+	draw_target* targets;
+	i32 length;
+} draw_order;
+
+void drawLine(int x,f32 dist, f32 hit_grid_offset, u32 texture_id, u32 color_offset) {
 	f32 rep = 1/dist;
 	i32 height = (int)((f32)X_RES*rep)*FOV_FACTORY;
 	
 	i32 top = CENTER_Y+(height/2);
 	i32 bottom = CENTER_Y-(height/2);
 
-	i32 text_hres = textures.array[texture_id*sizeof(texture)].hres;
-	i32 text_vres = textures.array[texture_id*sizeof(texture)].vres;
-	u32* pixels = textures.array[texture_id*sizeof(texture)].pixels;
+	i32 text_hres = textures.array[texture_id].hres;
+	i32 text_vres = textures.array[texture_id].vres;
+	u32* pixels = textures.array[texture_id].pixels;
 
 	f32 voffset = 0;
 	u32 text_posy = 0;
@@ -45,6 +66,10 @@ void drawLine(int x,u32 color ,f32 dist, f32 hit_grid_offset, u32 texture_id, u3
 }
 
 void render() {
+
+	draw_order.length = 0;	
+	draw_order.targets = calloc(X_RES,sizeof(draw_target));
+
 	for (int x = 0; x < X_RES; x++) {
 		f32 planex =  2 * (x / (f32) X_RES) - 1;
 
@@ -139,14 +164,43 @@ void render() {
 		f32 grid_offset;
 					
 
+	
 		if (!side) {
 			grid_offset = hit_pos.x-(f32)((int)hit_pos.x);
-			drawLine(x,0xFFFF00FF,plane_dist,grid_offset,MAP[MAP_SIZE*current_tile.y+current_tile.x]-1,0xFF000000);
+			draw_target target;
+			target.type = LINE;
+			target.x = x;
+			target.dist = plane_dist;
+			target.hit_grid_offset = grid_offset;
+			target.texture_id = MAP[MAP_SIZE*current_tile.y+current_tile.x]-1;
+			target.color_offset = 0xFF000000;
+			memcpy(&draw_order.targets[draw_order.length],&target,sizeof(draw_target));
+			draw_order.length++;
+
 		} else {
 			grid_offset = hit_pos.y-(f32)((int)hit_pos.y);
-			drawLine(x,0xFFEE00EE,plane_dist,grid_offset,MAP[MAP_SIZE*current_tile.y+current_tile.x]-1,0xFF000000);
+			draw_target target;
+			target.type = LINE;
+			target.x = x;
+			target.dist = plane_dist;
+			target.hit_grid_offset = grid_offset;
+			target.texture_id = MAP[MAP_SIZE*current_tile.y+current_tile.x]-1;
+			target.color_offset = 0xFF000000;
+			memcpy(&draw_order.targets[draw_order.length],&target,sizeof(target));
+			draw_order.length++;
 		}
 	}
+
+	for (int i = 0; i < draw_order.length; i++) {
+		draw_target target = draw_order.targets[i];
+		dtype type = target.type;
+		if (type == LINE) {
+			drawLine(target.x,target.dist,target.hit_grid_offset,target.texture_id,target.color_offset);
+			
+		}
+	}
+
+	free(draw_order.targets);
 }
 
 

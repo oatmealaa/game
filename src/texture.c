@@ -43,7 +43,7 @@ static void parseBitmap(int index,FILE* fptr) {
 	free(image);
 	
 		
-	textures.array[sizeof(texture)*index] = (texture){pixels,height,width,index};
+	textures.array[index] = (texture){pixels,height,width,index};
 
 }
 
@@ -51,7 +51,7 @@ static void parseBitmap(int index,FILE* fptr) {
 void loadTextures() {
 	
 	textures.len = TEXTURES_AMT;
-	textures.array = malloc(sizeof(texture*)*TEXTURES_AMT);
+	textures.array = calloc(TEXTURES_AMT,sizeof(texture));
 
 
 	for (int x = 0; x < TEXTURES_AMT; x++) {
@@ -76,7 +76,7 @@ void loadTextures() {
 			continue;
 		}
 		
-		texture text = textures.array[x*sizeof(texture)];
+		texture text = textures.array[x];
 		printf("%d, %d, %d\n",text.vres,text.hres,text.id);
 
 		fclose(fpointer);
