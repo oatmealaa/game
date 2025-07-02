@@ -100,7 +100,11 @@ void fixedUpdate() {
 		SDL_WarpMouseInWindow(state.window,WINDOW_WIDTH/2,WINDOW_HEIGHT/2);
 
 		state.dirangle -= (state.mousex-(WINDOW_WIDTH/2))*ROT_SPEED;	
-		state.pan_y += (state.mousey-(WINDOW_HEIGHT/2))*PAN_SPEED;	
+		state.pan_y += (state.mousey-(WINDOW_HEIGHT/2))*PAN_SPEED*Y_RES;
+		if (state.pan_y>Y_RES/2) state.pan_y=Y_RES/2;
+		if (state.pan_y<-(Y_RES/2)) state.pan_y=-(Y_RES/2);
+		
+	
 
 		state.dir.x = cos(state.dirangle);
 		state.dir.y = sin(state.dirangle);

@@ -13,8 +13,8 @@ typedef int64_t  i64;
 typedef size_t   usize;
 typedef ssize_t  isize;
 
-#define WINDOW_WIDTH 1280
-#define WINDOW_HEIGHT 720
+#define WINDOW_WIDTH 1920
+#define WINDOW_HEIGHT 1080
 
 // 320x180
 
@@ -25,7 +25,7 @@ typedef ssize_t  isize;
 
 #define MOVE_SPEED 5
 #define ROT_SPEED 0.01
-#define PAN_SPEED 1.2
+#define PAN_SPEED 0.006
 
 #define VIEW_DISTANCE 100.0f
 #define FOV_FACTORX 0.6f

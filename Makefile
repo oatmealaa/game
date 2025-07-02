@@ -1,9 +1,8 @@
 print-%:; @echo $($*)
 
-CC = gcc
+CC =gcc
 LD = gcc
 
-# library paths
 
 CCFLAGS =
 
@@ -16,7 +15,12 @@ CCFLAGS += -Wswitch-default
 CCFLAGS += -Wformat=2
 CCFLAGS += -Wno-unused-parameter
 
+#CCFLAGS += -I/usr/x86_64-w64-mingw32/include -I/usr/x86_64-w64-mingw32/include/SDL2 -Dmain=SDL_main
+
+
 LDFLAGS = -lm
+
+#LDFLAGS += -L/usr/x86_64-w64-mingw32/lib -lmingw32 -mwindows
 
 BIN = bin
 
@@ -37,6 +41,8 @@ dirs:
 
 game: dirs $(OBJ)
 	$(LD) -o bin/game $(OBJ) $(LDFLAGS)
+
+
 
 clean:
 	rm bin/game

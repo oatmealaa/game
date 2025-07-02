@@ -120,7 +120,7 @@ int comp(const void* a,const void* b) {
 void render() {
 
 	draw_order.length = 0;	
-	draw_order.targets = calloc(X_RES+10,sizeof(draw_target));
+	draw_order.targets = calloc(X_RES+entities.len,sizeof(draw_target));
 
 	for (int x = 0; x < X_RES; x++) {
 		f32 planex =  2 * (x / (f32) X_RES) - 1;

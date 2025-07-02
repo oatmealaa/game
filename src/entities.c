@@ -12,7 +12,7 @@ struct entities_s entities;
 
 
 void setupEntities() {
-	entities.array = calloc(1,sizeof(entity));
+	entities.array = calloc(10,sizeof(entity));
 	entities.len = 0;
 	entity crab;
 	crab.texture_id = 3;
@@ -23,6 +23,20 @@ void setupEntities() {
 	crab.behaviors[0] = FOLLOW_PLAYER;
 	memcpy(&entities.array[entities.len],&crab,sizeof(entity));
 	entities.len++;
+
+	for (i32 i = 0; i <3;i++) {
+		entity e;
+		e.texture_id = 3;
+		e.pos = (vec2f) {
+			(f32)i*3,
+			5.0f
+		};
+		e.behaviors[0] = PASSIVE;
+		memcpy(&entities.array[entities.len],&e,sizeof(entity));
+		entities.len++;
+		
+	}
+
 }
 
 void walk(i32 entity_i) {
